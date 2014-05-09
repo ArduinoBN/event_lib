@@ -28,3 +28,28 @@ void EventLib::event_loop() {
     check_and_handle_event(listener);
   }
 }
+
+struct timeOutStruct {
+	unsigned long next;
+	unsigned int interval;
+};
+
+int __EventLib__timeOut(void * data) {
+	timeOutStruct *toData = (timeOutStruct *)data;
+	int ret = 0;
+	unsigned long curr = millis();
+	if(toData->next <= curr) {
+		ret = 1;
+		toData->next = curr + toData->interval;
+	}
+	return ret;
+}
+
+void EventLib::set_timeout_to_run(unsigned int interval, void(*cb)(void *)) {
+	//TODO: decide how to free() the struct
+	struct timeOutStruct *toStruct = (struct timeOutStruct*) malloc(sizeof(struct timeOutStruct));
+	toStruct->interval = interval;
+	toStruct->next = millis() + interval;
+	add_listener((void *)toStruct, __EventLib__timeOut, cb);
+}
+
