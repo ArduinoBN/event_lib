@@ -10,11 +10,11 @@ class EventLib {
 		void (*handle_func)(void *);
 	} event_listener;
 
-	//typedef struct _event_node{
-	//	struct _event_listener *event;
-	//	struct _event_node *next.
-	//	struct _event_node *last.
-	//};
+	typedef struct _event_node{
+		struct _event_listener *event;
+		struct _event_node *next;
+		struct _event_node *prev;
+	};
 
 	public:
 		EventLib();
@@ -24,9 +24,8 @@ class EventLib {
 		void event_loop();
 	private:
 		event_listener *listeners[10];
-		int curr_listener;
-		//struct _event_node *first_event;
-		//struct _event_node *last_event;
+		struct _event_node *first_event;
+		struct _event_node *last_event;
 };
 
 #endif
