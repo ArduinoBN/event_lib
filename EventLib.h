@@ -3,7 +3,8 @@
 #include "Arduino.h"
 
 class EventLib {
-	#define RECURRENT_EVENT 0b0001
+	#define RECURRENT_EVENT		0b0001
+	#define BOUNCE_RETRY_TIME	50
 
 	typedef struct _event_listener{
 		void *event_data;
@@ -24,12 +25,26 @@ class EventLib {
 			unsigned long next;
 			unsigned int interval;
 		};
+		struct pinStatus {
+			int pin_num;
+			byte status_to_run;
+			byte last_status;
+			unsigned int bounce_retry;
+			void (*cb)(void *);
+			EventLib *obj;
+		};
 		EventLib();
-		void add_listener(void *, int (*)(void *), void (*)(void *));
 		void add_listener(void *, int (*)(void *), void (*)(void *), int);
-		void set_timeout_to_run(unsigned int, void(*)(void *));
+		void add_listener(void *, int (*)(void *), void (*)(void *));
 		void set_timeout_to_run(unsigned int, void(*)(void *), int);
-		void set_timeout_to_recurrently_run(unsigned int, void(*)(void *));
+		void set_timeout_to_run(unsigned int, void(*)(void *));
+		void recurrently_set_timeout_to_run(unsigned int, void(*)(void *));
+		void run_on_status(int, byte, void(*)(void *), int);
+		void run_on_status(int, byte, void(*)(void *));
+		void recurrently_run_on_status(int, byte, void(*)(void *));
+		void run_on_unbounced_status(int, byte, void(*)(void *), int);
+		void run_on_unbounced_status(int, byte, void(*)(void *));
+		void recurrently_run_on_unbounced_status(int, byte, void(*)(void *));
 		void event_loop();
 	private:
 		event_listener *listeners[10];

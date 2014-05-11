@@ -108,6 +108,76 @@ void EventLib::set_timeout_to_run(unsigned int interval, void(*cb)(void *)) {
 	set_timeout_to_run(interval, cb, 0);
 }
 
-void EventLib::set_timeout_to_recurrently_run(unsigned int interval, void(*cb)(void *)) {
+void EventLib::recurrently_set_timeout_to_run(unsigned int interval, void(*cb)(void *)) {
 	set_timeout_to_run(interval, cb, RECURRENT_EVENT);
+}
+
+int __EventLib__pin_status(void * data) {
+	struct EventLib::pinStatus *toData = (struct EventLib::pinStatus *)data;
+	int ret = 0;
+	byte curr;
+	if(toData->last_status != toData->status_to_run) {
+		byte curr = digitalRead(toData->pin_num);
+		if(curr == toData->status_to_run ) {
+			ret = 1;
+		}
+	}
+	toData->last_status = curr;
+	return ret;
+}
+
+void EventLib::run_on_status(int pin_num, byte status, void(*cb)(void *), int flags) {
+	//TODO: decide how to free() the struct
+	struct EventLib::pinStatus *toStruct = (struct EventLib::pinStatus*) malloc(sizeof(struct EventLib::pinStatus));
+	toStruct->pin_num = pin_num;
+	toStruct->status_to_run = status;
+	toStruct->last_status = digitalRead(pin_num);
+	add_listener((void *)toStruct, __EventLib__pin_status, cb, flags);
+}
+
+void EventLib::run_on_status(int pin_num, byte state, void(*cb)(void *)) {
+	run_on_status(pin_num, state, cb, 0);
+}
+
+void EventLib::recurrently_run_on_status(int pin_num, byte state, void(*cb)(void *)) {
+	run_on_status(pin_num, state, cb, RECURRENT_EVENT);
+}
+
+int __EventLib__pin_unbounced_status(void *data) {
+	struct EventLib::pinStatus *toData = (struct EventLib::pinStatus *)data;
+	int ret = 0;
+	byte curr;
+	if(millis() >= toData->bounce_retry) {
+		byte curr = digitalRead(toData->pin_num);
+		if(curr == toData->status_to_run ) {
+			ret = 1;
+		}
+	}
+	toData->last_status = curr;
+	return ret;
+}
+
+void __EventLib__pin_status_add_retry(void *data) {
+	struct EventLib::pinStatus *toStruct = (struct EventLib::pinStatus*) malloc(sizeof(struct EventLib::pinStatus));
+	toStruct->bounce_retry = millis() + BOUNCE_RETRY_TIME;
+	toStruct->obj->add_listener((void *)toStruct, __EventLib__pin_unbounced_status, toStruct->cb, 0);
+}
+
+void EventLib::run_on_unbounced_status(int pin_num, byte status, void(*cb)(void *), int flags) {
+	//TODO: decide how to free() the struct
+	struct EventLib::pinStatus *toStruct = (struct EventLib::pinStatus*) malloc(sizeof(struct EventLib::pinStatus));
+	toStruct->pin_num = pin_num;
+	toStruct->status_to_run = status;
+	toStruct->last_status = digitalRead(pin_num);
+	toStruct->cb = cb;
+	toStruct->obj = this;
+	add_listener((void *)toStruct, __EventLib__pin_status, __EventLib__pin_status_add_retry, flags);
+}
+
+void EventLib::run_on_unbounced_status(int pin_num, byte state, void(*cb)(void *)) {
+	run_on_unbounced_status(pin_num, state, cb, 0);
+}
+
+void EventLib::recurrently_run_on_unbounced_status(int pin_num, byte state, void(*cb)(void *)) {
+	run_on_unbounced_status(pin_num, state, cb, RECURRENT_EVENT);
 }
