@@ -85,13 +85,8 @@ void EventLib::event_loop() {
   }
 }
 
-struct timeOutStruct {
-	unsigned long next;
-	unsigned int interval;
-};
-
 int __EventLib__timeOut(void * data) {
-	timeOutStruct *toData = (timeOutStruct *)data;
+	struct EventLib::timeOutStruct *toData = (struct EventLib::timeOutStruct *)data;
 	int ret = 0;
 	unsigned long curr = millis();
 	if(toData->next <= curr) {
@@ -101,11 +96,18 @@ int __EventLib__timeOut(void * data) {
 	return ret;
 }
 
-void EventLib::set_timeout_to_run(unsigned int interval, void(*cb)(void *)) {
+void EventLib::set_timeout_to_run(unsigned int interval, void(*cb)(void *), int flags) {
 	//TODO: decide how to free() the struct
-	struct timeOutStruct *toStruct = (struct timeOutStruct*) malloc(sizeof(struct timeOutStruct));
+	struct EventLib::timeOutStruct *toStruct = (struct EventLib::timeOutStruct*) malloc(sizeof(struct EventLib::timeOutStruct));
 	toStruct->interval = interval;
 	toStruct->next = millis() + interval;
-	add_listener((void *)toStruct, __EventLib__timeOut, cb);
+	add_listener((void *)toStruct, __EventLib__timeOut, cb, flags);
 }
 
+void EventLib::set_timeout_to_run(unsigned int interval, void(*cb)(void *)) {
+	set_timeout_to_run(interval, cb, 0);
+}
+
+void EventLib::set_timeout_to_recurrently_run(unsigned int interval, void(*cb)(void *)) {
+	set_timeout_to_run(interval, cb, RECURRENT_EVENT);
+}

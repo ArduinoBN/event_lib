@@ -20,10 +20,16 @@ class EventLib {
 	};
 
 	public:
+		struct timeOutStruct {
+			unsigned long next;
+			unsigned int interval;
+		};
 		EventLib();
 		void add_listener(void *, int (*)(void *), void (*)(void *));
 		void add_listener(void *, int (*)(void *), void (*)(void *), int);
 		void set_timeout_to_run(unsigned int, void(*)(void *));
+		void set_timeout_to_run(unsigned int, void(*)(void *), int);
+		void set_timeout_to_recurrently_run(unsigned int, void(*)(void *));
 		void event_loop();
 	private:
 		event_listener *listeners[10];
